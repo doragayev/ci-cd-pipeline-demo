@@ -35,7 +35,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: test
-
+    if: github.event_name == 'push'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,7 +47,9 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/ci-cd-demo:latest .
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/ci-cd-demo:latest \
+                       -t ${{ secrets.DOCKER_USERNAME }}/ci-cd-demo:${{ github.sha }} .
 
       - name: Run container
         run: |
@@ -58,7 +60,9 @@ jobs:
         run: curl --fail http://localhost:5000
 
       - name: Push image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/ci-cd-demo:latest
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/ci-cd-demo:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/ci-cd-demo:${{ github.sha }}
 
       - name: Cleanup
         if: always()
